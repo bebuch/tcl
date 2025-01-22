@@ -1,0 +1,4 @@
+[submodule "tcl"]
+	path = tcl
+	url = https://github.com/tcltk/tcl.git
+	branch = 874e4fe4264a40c00c4db5115afba9600f9f368d
