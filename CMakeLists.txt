@@ -21,9 +21,54 @@ find_package(zlib CONFIG REQUIRED)
 
 include(GNUInstallDirs)
 
-file(READ "tcl/generic/tclMain.c" content)
-string(PREPEND content "#define UNICODE\n#define _UNICODE\n")
-file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/tclMainW.c" "${content}")
+if(UNIX)
+    set(OS_SPECIFIC
+        "tcl/unix/tclAppInit.c"
+        "tcl/unix/tclLoadAix.c"
+        "tcl/unix/tclLoadDl.c"
+        "tcl/unix/tclLoadDyld.c"
+        "tcl/unix/tclLoadNext.c"
+        "tcl/unix/tclLoadOSF.c"
+        "tcl/unix/tclLoadShl.c"
+        "tcl/unix/tclUnixChan.c"
+        "tcl/unix/tclUnixCompat.c"
+        "tcl/unix/tclUnixEvent.c"
+        "tcl/unix/tclUnixFCmd.c"
+        "tcl/unix/tclUnixFile.c"
+        "tcl/unix/tclUnixInit.c"
+        "tcl/unix/tclUnixNotfy.c"
+        "tcl/unix/tclUnixPipe.c"
+        "tcl/unix/tclUnixPort.h"
+        "tcl/unix/tclUnixSock.c"
+        "tcl/unix/tclUnixTest.c"
+        "tcl/unix/tclUnixThrd.c"
+        "tcl/unix/tclUnixThrd.h"
+        "tcl/unix/tclUnixTime.c"
+        "tcl/unix/tclXtNotify.c"
+        "tcl/unix/tclXtTest.c")
+else()
+    file(READ "tcl/generic/tclMain.c" content)
+    string(PREPEND content "#define UNICODE\n#define _UNICODE\n")
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/tclMainW.c" "${content}")
+
+    set(OS_SPECIFIC
+        "tcl/win/tclWin32Dll.c"
+        "tcl/win/tclWinChan.c"
+        "tcl/win/tclWinConsole.c"
+        "tcl/win/tclWinError.c"
+        "tcl/win/tclWinFCmd.c"
+        "tcl/win/tclWinFile.c"
+        "tcl/win/tclWinInit.c"
+        "tcl/win/tclWinLoad.c"
+        "tcl/win/tclWinNotify.c"
+        "tcl/win/tclWinPipe.c"
+        "tcl/win/tclWinSerial.c"
+        "tcl/win/tclWinSock.c"
+        "tcl/win/tclWinThrd.c"
+        "tcl/win/tclWinTime.c"
+        "tcl/win/tcl.rc"
+        "${CMAKE_CURRENT_BINARY_DIR}/tclMainW.c")
+end()
 
 add_library(Tcl SHARED
     "tcl/libtommath/bn_mp_add.c"
@@ -176,30 +221,25 @@ add_library(Tcl SHARED
     "tcl/generic/tclUtil.c"
     "tcl/generic/tclVar.c"
     "tcl/generic/tclZlib.c"
-    "tcl/win/tclWin32Dll.c"
-    "tcl/win/tclWinChan.c"
-    "tcl/win/tclWinConsole.c"
-    "tcl/win/tclWinError.c"
-    "tcl/win/tclWinFCmd.c"
-    "tcl/win/tclWinFile.c"
-    "tcl/win/tclWinInit.c"
-    "tcl/win/tclWinLoad.c"
-    "tcl/win/tclWinNotify.c"
-    "tcl/win/tclWinPipe.c"
-    "tcl/win/tclWinSerial.c"
-    "tcl/win/tclWinSock.c"
-    "tcl/win/tclWinThrd.c"
-    "tcl/win/tclWinTime.c"
-    "tcl/win/tcl.rc"
-    "${CMAKE_CURRENT_BINARY_DIR}/tclMainW.c")
+    ${OS_SPECIFIC})
 
 target_compile_definitions(Tcl PRIVATE "BUILD_tcl" "HAVE_ZLIB" "MP_FIXED_CUTOFFS")
 target_compile_definitions(Tcl PRIVATE
     CFG_INSTALL_LIBDIR="" CFG_INSTALL_BINDIR="" CFG_INSTALL_SCRDIR="" CFG_INSTALL_INCDIR="" CFG_INSTALL_DOCDIR=""
     CFG_RUNTIME_LIBDIR="" CFG_RUNTIME_BINDIR="" CFG_RUNTIME_SCRDIR="" CFG_RUNTIME_INCDIR="" CFG_RUNTIME_DOCDIR="")
-target_include_directories(Tcl PRIVATE "tcl/win" "tcl/generic" "tcl/libtommath")
+target_include_directories(Tcl PRIVATE "tcl/generic" "tcl/libtommath")
+if(UNIX)
+    target_include_directories(Tcl PRIVATE "tcl/unix")
+else()
+    target_include_directories(Tcl PRIVATE "tcl/win")
+endif()
+
 target_include_directories(Tcl INTERFACE $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-target_link_libraries(Tcl PUBLIC ZLIB::ZLIB Netapi32)
+target_link_libraries(Tcl PUBLIC ZLIB::ZLIB)
+
+if(NOT UNIX)
+    target_link_libraries(Tcl PUBLIC Netapi32)
+endif()
 
 # Install
 install(FILES
