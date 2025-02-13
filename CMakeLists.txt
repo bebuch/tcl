@@ -68,7 +68,7 @@ else()
         "tcl/win/tclWinTime.c"
         "tcl/win/tcl.rc"
         "${CMAKE_CURRENT_BINARY_DIR}/tclMainW.c")
-end()
+endif()
 
 add_library(Tcl SHARED
     "tcl/libtommath/bn_mp_add.c"
